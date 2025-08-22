@@ -19,11 +19,20 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 connectDB();
 
-const allwedOrigins = ["http://localhost:5173"]
+const allwedOrigins = ["http://localhost:5173","biz-flow-erp.vercel.app"]
 const app = express();
 app.use(express.json())
 app.use(cookieParser());
-app.use(cors({origin : allwedOrigins ,credentials : true}));
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allwedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));

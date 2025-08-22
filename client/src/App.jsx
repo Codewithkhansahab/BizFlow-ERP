@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Home from './pages/Home';
 import Login from './pages/Login';
-import VerifyEmail from './pages/verifyEmail';
+import VerifyEmail from './pages/VerifyEmail.jsx';
 import ResetPassword from './pages/ResetPassword';
 import ForgotPassword from './auth/ForgotPassword';
 import ResetPasswordWithOTP from './auth/ResetPasswordWithOTP';
