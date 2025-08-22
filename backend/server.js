@@ -19,7 +19,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 connectDB();
 
-const allwedOrigins = ["http://localhost:5173"]
+const allwedOrigins = ["http://localhost:5173","biz-flow-erp.vercel.app"]
 const app = express();
 app.use(express.json())
 app.use(cookieParser());
