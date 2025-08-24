@@ -610,7 +610,11 @@ const HRDashboard = () => {
               <Col md={4} className="text-center">
                 {selectedEmployee.user?.profileImage ? (
                   <img 
-                    src={`${backendUrl}${selectedEmployee.user.profileImage}`}
+                    src={
+                      selectedEmployee.user?.profileImage?.startsWith('http')
+                        ? selectedEmployee.user.profileImage
+                        : `${(backendUrl || '').replace(/\/$/, '')}/${(selectedEmployee.user.profileImage || '').replace(/^\/+/, '')}`
+                    }
                     alt={selectedEmployee.user?.name || 'Employee'}
                     className="rounded-circle mb-3"
                     style={{ width: 100, height: 100, objectFit: 'cover', border: '3px solid #007bff' }}

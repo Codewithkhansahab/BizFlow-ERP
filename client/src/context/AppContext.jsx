@@ -4,7 +4,12 @@ import axios from "axios";
 export const AppContent = createContext();
 
 export const AppContextProvider = (props) => {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    // Prefer .env value; else fall back to swapping Vite's 5173 with backend 5000 during local dev.
+    // Normalize to no trailing slash to avoid // in requests.
+    const computedFallback = (typeof window !== 'undefined' && window.location && window.location.origin)
+        ? window.location.origin.replace(/:5173$/, ':5000')
+        : '';
+    const backendUrl = (import.meta.env.VITE_BACKEND_URL || computedFallback || '').replace(/\/$/, '');
 
     // Try to get login state from localStorage
     const [isLoggedIn, setIsLoggedIn] = useState(() => {

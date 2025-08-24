@@ -4,10 +4,10 @@ import { AppContent } from "../../context/AppContext";
 import { toast } from "react-toastify";
 
 export default function UniversalCompleteProfile({ userId, userRole, onClose }) {
-  const { backendUrl } = useContext(AppContent);
+  const { backendUrl, userData } = useContext(AppContent);
   const [formData, setFormData] = useState({
     department: "",
-    designation: userRole === 'Employee' ? "" : userRole,
+    designation: userRole ? (userRole === 'Employee' ? "" : userRole) : "",
     joiningDate: "",
     phone: "",
     address: "",
@@ -39,8 +39,14 @@ export default function UniversalCompleteProfile({ userId, userRole, onClose }) 
     e.preventDefault();
     try {
       axios.defaults.withCredentials = true;
+      const resolvedUserId = userId || userData?._id;
+      // Client-side guard
+      if (!resolvedUserId || !formData.department || !formData.designation || !formData.joiningDate || !formData.phone || !formData.address) {
+        toast.error("All fields are required");
+        return;
+      }
       const payload = {
-        userId,
+        userId: resolvedUserId,
         department: formData.department,
         position: formData.designation,
         joiningDate: formData.joiningDate,
@@ -147,7 +153,11 @@ export default function UniversalCompleteProfile({ userId, userRole, onClose }) 
       </div>
 
       <div className="text-end">
-        <button type="submit" className="btn btn-success">
+        <button
+          type="submit"
+          className="btn btn-success"
+          disabled={!(userId || userData?._id) || !formData.department || !formData.designation || !formData.joiningDate || !formData.phone || !formData.address}
+        >
           Complete Profile
         </button>
       </div>
