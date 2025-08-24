@@ -26,6 +26,8 @@ const AdminDashboard = () => {
   const [showAllRequests, setShowAllRequests] = useState(false);
   const [showAllAttendance, setShowAllAttendance] = useState(false);
   const [attendanceData, setAttendanceData] = useState([]);
+  const [allAttendanceData, setAllAttendanceData] = useState([]);
+  const [attendanceFilter, setAttendanceFilter] = useState('today');
   // Approvals state (Admin sees HR and Manager pending accounts)
   const [approvals, setApprovals] = useState([]);
   const [approvalsLoading, setApprovalsLoading] = useState(false);
@@ -194,30 +196,137 @@ const AdminDashboard = () => {
     }
   };
 
+  // Transform a raw attendance record into UI-friendly shape (same approach as HR)
+  const transformAttendanceRecord = (record, index) => ({
+    _id: `attendance-${index}`,
+    employee: {
+      user: {
+        name: record.user || 'Unknown User',
+        email: record.email || 'N/A'
+      },
+      department: 'N/A',
+      designation: record.role || 'N/A'
+    },
+    status: record.status || 'Unknown',
+    date: record.date,
+    checkInTime: record.checkIn && record.checkIn !== 'N/A'
+      ? (() => {
+          try {
+            const [time, period] = record.checkIn.split(' ');
+            const [hours, minutes] = time.split(':');
+            let hour24 = parseInt(hours);
+            if (period === 'PM' && hour24 !== 12) hour24 += 12;
+            if (period === 'AM' && hour24 === 12) hour24 = 0;
+            const today = new Date();
+            today.setHours(hour24, parseInt(minutes), 0, 0);
+            return today;
+          } catch {
+            return null;
+          }
+        })()
+      : null,
+    checkOutTime: record.checkOut && record.checkOut !== 'N/A'
+      ? (() => {
+          try {
+            const [time, period] = record.checkOut.split(' ');
+            const [hours, minutes] = time.split(':');
+            let hour24 = parseInt(hours);
+            if (period === 'PM' && hour24 !== 12) hour24 += 12;
+            if (period === 'AM' && hour24 === 12) hour24 = 0;
+            const today = new Date();
+            today.setHours(hour24, parseInt(minutes), 0, 0);
+            return today;
+          } catch {
+            return null;
+          }
+        })()
+      : null,
+    hoursWorked: record.totalHours || 0
+  });
+
+  // Apply filter to allAttendanceData and update attendanceData
+  const filterAttendanceData = (allData, filter) => {
+    const today = new Date();
+    const todayFormatted = today.toISOString().split('T')[0];
+    const todayMoment = `${today.getFullYear()}-${today.toLocaleString('default', { month: 'long' })}-${String(today.getDate()).padStart(2, '0')}`;
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayFormatted = yesterday.toISOString().split('T')[0];
+    const yesterdayMoment = `${yesterday.getFullYear()}-${yesterday.toLocaleString('default', { month: 'long' })}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+    let filteredData = [];
+    switch (filter) {
+      case 'today':
+        filteredData = allData.filter(record =>
+          record.date === todayMoment || (typeof record.date === 'string' && record.date.startsWith(todayFormatted))
+        );
+        break;
+      case 'yesterday':
+        filteredData = allData.filter(record =>
+          record.date === yesterdayMoment || (typeof record.date === 'string' && record.date.startsWith(yesterdayFormatted))
+        );
+        break;
+      case 'all':
+        filteredData = allData;
+        break;
+      default:
+        filteredData = allData.filter(record =>
+          record.date === todayMoment || (typeof record.date === 'string' && record.date.startsWith(todayFormatted))
+        );
+    }
+    setAttendanceData(filteredData);
+  };
+
   // Fetch attendance records for admin view
   const fetchAttendanceRecords = async () => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/attendance/get-all`, { withCredentials: true });
-      const transformedData = (data.data || []).map(record => ({
-        _id: record._id || Math.random().toString(),
-        employee: {
-          user: {
-            name: record.user,
-            email: record.email
-          },
-          department: 'N/A',
-          designation: record.role
-        },
-        status: record.status,
-        checkInTime: record.checkIn !== 'N/A' ? new Date(`${record.date} ${record.checkIn}`) : null,
-        checkOutTime: record.checkOut !== 'N/A' ? new Date(`${record.date} ${record.checkOut}`) : null,
-        hoursWorked: record.totalHours
-      }));
-      setAttendanceData(transformedData);
+      const transformedData = (data.data || []).map(transformAttendanceRecord);
+      setAllAttendanceData(transformedData);
+      filterAttendanceData(transformedData, attendanceFilter);
     } catch (err) {
       console.error('Error fetching attendance records:', err);
       setAttendanceData([]);
     }
+  };
+
+  // Handle filter change from UI
+  const handleAttendanceFilterChange = (filter) => {
+    setAttendanceFilter(filter);
+    filterAttendanceData(allAttendanceData, filter);
+  };
+
+  // Export current month's attendance to CSV (same as HR)
+  const exportAttendanceToCSV = () => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const monthData = allAttendanceData.filter(record => {
+      const recordDate = new Date(record.date);
+      return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
+    });
+
+    const csvContent = [
+      ['Date', 'Employee', 'Email', 'Role', 'Status', 'Check In', 'Check Out', 'Hours Worked'],
+      ...monthData.map(record => [
+        record.date,
+        record.employee.user.name,
+        record.employee.user.email,
+        record.employee.designation,
+        record.status,
+        record.checkInTime ? record.checkInTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'N/A',
+        record.checkOutTime ? record.checkOutTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'N/A',
+        record.hoursWorked
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `attendance-${new Date().toLocaleString('default', { month: 'long' })}-${currentYear}.csv`;
+    link.click();
+    window.URL.revokeObjectURL(url);
   };
 
   useEffect(() => {
@@ -346,6 +455,9 @@ const AdminDashboard = () => {
             showAll={showAllAttendance}
             setShowAll={setShowAllAttendance}
             onRefresh={fetchAttendanceRecords}
+            attendanceFilter={attendanceFilter}
+            onFilterChange={handleAttendanceFilterChange}
+            onExport={exportAttendanceToCSV}
           />
         </Col>
       </Row>
