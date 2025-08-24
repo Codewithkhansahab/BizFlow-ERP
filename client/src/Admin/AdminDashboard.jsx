@@ -3,7 +3,7 @@ import DashboardLayout from '../Dashboard/DashboardLayout';
 import { AppContent } from '../context/AppContext';
 import axios from 'axios';
 import WelcomeHeader from '../Employee/components/WelcomeHeader';
-import { Row, Col, Table, Badge, Button } from 'react-bootstrap';
+import { Row, Col, Table, Badge, Button, Modal } from 'react-bootstrap';
 import AdminDashboardStats from './components/AdminDashboardStats';
 import RecentEmployeesCard from './components/RecentEmployeesCard';
 import RecentTasksCard from './components/RecentTasksCard';
@@ -11,6 +11,7 @@ import ProfileRequestsManagementCard from './components/ProfileRequestsManagemen
 import AdminAnnouncementCard from './components/AdminAnnouncementCard';
 import AttendanceOverviewCard from '../HR/components/AttendanceOverviewCard';
 import { toast } from 'react-toastify';
+import UniversalCompleteProfile from '../Dashboard/components/UniversalCompleteProfile';
 
 const AdminDashboard = () => {
   const { backendUrl } = useContext(AppContent);
@@ -35,6 +36,8 @@ const AdminDashboard = () => {
   // User and time state for welcome header
   const [currentUser, setCurrentUser] = useState(null);
   const [now, setNow] = useState(new Date());
+  const [showCompleteProfile, setShowCompleteProfile] = useState(false);
+  const [needsProfile, setNeedsProfile] = useState(false);
   
   // (removed duplicate useEffect that declared local fetchers)
   
@@ -165,6 +168,8 @@ const AdminDashboard = () => {
         setAttendanceStatus(status);
         setAttendanceVariant(status === 'Present' ? 'success' : status === 'Absent' ? 'danger' : 'secondary');
       }
+      // Flag if this user has no employee profile yet
+      setNeedsProfile(!data?.employee);
     } catch (err) {
       console.error('Error fetching attendance data:', err);
     }
@@ -358,6 +363,17 @@ const AdminDashboard = () => {
       
       <AdminDashboardStats stats={stats} loading={loading} />
 
+      {needsProfile && (
+        <div className="alert alert-warning d-flex justify-content-between align-items-center mt-3">
+          <div>
+            <strong>Complete your employee profile.</strong> Some features require additional details like department and designation.
+          </div>
+          <Button variant="primary" onClick={() => setShowCompleteProfile(true)}>
+            Complete Profile
+          </Button>
+        </div>
+      )}
+
       <Row className="g-4 mt-1">
         <Col xs={12} md={6}>
           <RecentEmployeesCard
@@ -461,6 +477,24 @@ const AdminDashboard = () => {
           />
         </Col>
       </Row>
+      {/* Complete Profile Modal */}
+      <Modal
+        show={showCompleteProfile}
+        onHide={() => setShowCompleteProfile(false)}
+        centered
+        size="lg"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Complete Your Profile</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <UniversalCompleteProfile
+            userId={currentUser?._id}
+            userRole={currentUser?.role}
+            onClose={() => setShowCompleteProfile(false)}
+          />
+        </Modal.Body>
+      </Modal>
         </DashboardLayout>
     );
 };

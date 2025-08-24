@@ -12,6 +12,7 @@ import ProfileRequestsCard from './components/ProfileRequestsCard';
 import HRAnnouncementCard from './components/HRAnnouncementCard';
 import AttendanceOverviewCard from './components/AttendanceOverviewCard';
 import { Link } from 'react-router-dom';
+import UniversalCompleteProfile from '../Dashboard/components/UniversalCompleteProfile';
 
 const HRDashboard = () => {
   const { backendUrl, userData } = useContext(AppContent);
@@ -45,6 +46,8 @@ const HRDashboard = () => {
   // Modal states
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showCompleteProfile, setShowCompleteProfile] = useState(false);
+  const [needsProfile, setNeedsProfile] = useState(false);
   
   // Helper to normalize user object for header display
   const mapUser = (u) => u ? ({
@@ -422,6 +425,8 @@ const HRDashboard = () => {
           status === 'Absent' ? 'danger' : 'secondary'
         );
       }
+      // Prompt for profile completion if employee profile is missing
+      setNeedsProfile(!data?.employee);
     } catch (err) {
       console.error('Error fetching attendance data:', err);
     }
@@ -451,6 +456,17 @@ const HRDashboard = () => {
         handleCheckOut={handleCheckOut}
       />
       <HRDashboardStats stats={stats} loading={loading} />
+
+      {needsProfile && (
+        <div className="alert alert-warning d-flex justify-content-between align-items-center mt-3">
+          <div>
+            <strong>Complete your employee profile.</strong> Some features require additional details like department and designation.
+          </div>
+          <Button variant="primary" onClick={() => setShowCompleteProfile(true)}>
+            Complete Profile
+          </Button>
+        </div>
+      )}
       <Row className="mb-3">
         <Col>
           <Button as={Link} to="/hr/salaries" variant="dark">Manage Salaries</Button>
@@ -563,6 +579,25 @@ const HRDashboard = () => {
           />
         </Col>
       </Row>
+
+      {/* Complete Profile Modal */}
+      <Modal
+        show={showCompleteProfile}
+        onHide={() => setShowCompleteProfile(false)}
+        centered
+        size="lg"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Complete Your Profile</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <UniversalCompleteProfile
+            userId={currentUser?._id}
+            userRole={currentUser?.role}
+            onClose={() => setShowCompleteProfile(false)}
+          />
+        </Modal.Body>
+      </Modal>
       
       {/* Employee Profile Modal */}
       {selectedEmployee && (

@@ -39,10 +39,16 @@ export default function UniversalCompleteProfile({ userId, userRole, onClose }) 
     e.preventDefault();
     try {
       axios.defaults.withCredentials = true;
-      await axios.post(`${backendUrl}/api/employee/complete-profile`, {
+      const payload = {
         userId,
-        ...formData
-      });
+        department: formData.department,
+        position: formData.designation,
+        joiningDate: formData.joiningDate,
+        phone: formData.phone,
+        address: formData.address,
+        profileImage: formData.profileImage,
+      };
+      await axios.post(`${backendUrl}/api/employee/complete-profile`, payload);
       toast.success("Profile completed successfully!");
       onClose();
       window.location.reload(); // Refresh to show dashboard
