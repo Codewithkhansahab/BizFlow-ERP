@@ -161,27 +161,28 @@ export const getDashboardData = async (req, res) => {
 export const completeProfile = async (req, res) => {
   try {
     const { userId, department, position, joiningDate, phone, address, profileImage } = req.body;
+    const resolvedUserId = userId || req.user?._id; // prefer authenticated user
 
     // 1. Basic validation
-    if (!userId || !department || !position || !joiningDate || !phone || !address) {
+    if (!resolvedUserId || !department || !position || !joiningDate || !phone || !address) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
     // 2. Check if the user exists
-    const user = await User.findById(userId);
+    const user = await User.findById(resolvedUserId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     // 3. Check if the profile already exists
-    let employee = await Employee.findOne({ user: userId });
+    let employee = await Employee.findOne({ user: resolvedUserId });
     if (employee) {
       return res.status(400).json({ message: "Profile already exists for this user" });
     }
 
     // 4. Create new employee profile
     employee = new Employee({
-      user: userId, // references the User model
+      user: resolvedUserId, // references the User model
       department,
       designation: position, // mapping 'position' from request to schema's 'designation'
       joiningDate,
@@ -194,7 +195,7 @@ export const completeProfile = async (req, res) => {
 
     // persist profile image URL on User if provided
     if (profileImage) {
-      const userDoc = await User.findById(userId);
+      const userDoc = await User.findById(resolvedUserId);
       if (userDoc) {
         userDoc.profileImage = profileImage;
         await userDoc.save();

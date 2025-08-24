@@ -39,14 +39,12 @@ export default function UniversalCompleteProfile({ userId, userRole, onClose }) 
     e.preventDefault();
     try {
       axios.defaults.withCredentials = true;
-      const resolvedUserId = userId || userData?._id;
-      // Client-side guard
-      if (!resolvedUserId || !formData.department || !formData.designation || !formData.joiningDate || !formData.phone || !formData.address) {
+      // Client-side guard (userId is derived on backend from auth session)
+      if (!formData.department || !formData.designation || !formData.joiningDate || !formData.phone || !formData.address) {
         toast.error("All fields are required");
         return;
       }
       const payload = {
-        userId: resolvedUserId,
         department: formData.department,
         position: formData.designation,
         joiningDate: formData.joiningDate,
@@ -156,7 +154,7 @@ export default function UniversalCompleteProfile({ userId, userRole, onClose }) 
         <button
           type="submit"
           className="btn btn-success"
-          disabled={!(userId || userData?._id) || !formData.department || !formData.designation || !formData.joiningDate || !formData.phone || !formData.address}
+          disabled={!formData.department || !formData.designation || !formData.joiningDate || !formData.phone || !formData.address}
         >
           Complete Profile
         </button>

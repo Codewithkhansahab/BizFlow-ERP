@@ -26,7 +26,7 @@ router.put("/employees/:id", protect, updateEmployeeById); // PATCH or PUT is be
 router.put("/employees/:id/status", protect, roleMidddleware(["Admin", "HR", "Manager"]), updateEmployeeStatus);
 router.delete("/employees/:id", protect, deleteEmployee); // Only Admin/HR can delete
 router.get("/dashboard", protect, getDashboardData);
-router.post("/complete-profile",completeProfile)
+router.post("/complete-profile", protect, completeProfile)
 
 // Profile update request workflow
 router.post("/profile-update/request", protect, requestProfileUpdate);
