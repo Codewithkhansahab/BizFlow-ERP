@@ -5,8 +5,15 @@ import { toast } from "react-toastify";
 
 export default function UniversalCompleteProfile({ userId, userRole, onClose }) {
   const { backendUrl, userData } = useContext(AppContent);
+
+  const defaultDeptByRole = userRole === 'HR' 
+    ? 'Human Resources' 
+    : userRole === 'Manager'
+      ? 'Operations'
+      : '';
+
   const [formData, setFormData] = useState({
-    department: "",
+    department: defaultDeptByRole,
     designation: userRole ? (userRole === 'Employee' ? "" : userRole) : "",
     joiningDate: "",
     phone: "",
@@ -52,13 +59,19 @@ export default function UniversalCompleteProfile({ userId, userRole, onClose }) 
         address: formData.address,
         profileImage: formData.profileImage,
       };
-      await axios.post(`${backendUrl}/api/employee/complete-profile`, payload);
+      await axios.post(`${backendUrl}/api/employee/complete-profile`, payload, { withCredentials: true });
       toast.success("Profile completed successfully!");
       onClose();
       window.location.reload(); // Refresh to show dashboard
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data?.message || "Something went wrong");
+      const msg = error.response?.data?.message || "Something went wrong";
+      const missing = error.response?.data?.missing;
+      if (Array.isArray(missing) && missing.length) {
+        toast.error(`${msg}: ${missing.join(', ')}`);
+      } else {
+        toast.error(msg);
+      }
     }
   };
 

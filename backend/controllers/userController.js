@@ -5,6 +5,14 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
+import { 
+    buildRegistrationEmail,
+    buildOTPEmail,
+    buildPasswordResetLinkEmail,
+    buildPasswordChangedEmail,
+    buildApprovalDecisionEmail,
+} from "../utils/emailTemplates.js";
+
 // Strong password validator: min 8, upper, lower, number, special char
 const isStrongPassword = (password) => {
     if (typeof password !== 'string') return false;
@@ -67,6 +75,28 @@ export const approveUserRegistration = async (req, res) => {
             console.error('Failed to notify registrant (approve):', notifyErr);
         }
 
+        // Send approval email
+        try {
+            const { subject, html, text } = buildApprovalDecisionEmail({
+                name: user.name,
+                role: user.role,
+                decision: 'Approved',
+                frontendUrl: process.env.FRONTEND_URL || 'https://bizflow-erp-1.onrender.com',
+                appName: process.env.APP_NAME || 'Bizflow',
+                supportEmail: process.env.SUPPORT_EMAIL || process.env.SENDER_EMAIL,
+                logoUrl: process.env.APP_LOGO_URL,
+            });
+            await transporter.sendMail({
+                from: process.env.SENDER_EMAIL,
+                to: user.email,
+                subject,
+                html,
+                text,
+            });
+        } catch (emailErr) {
+            console.error('Failed to send approval email:', emailErr?.message || emailErr);
+        }
+
         return res.json({ success: true, message: 'User approved' });
     } catch (error) {
         console.error('Error approving user:', error);
@@ -108,6 +138,29 @@ export const rejectUserRegistration = async (req, res) => {
             });
         } catch (notifyErr) {
             console.error('Failed to notify registrant (reject):', notifyErr);
+        }
+
+        // Send rejection email
+        try {
+            const { subject, html, text } = buildApprovalDecisionEmail({
+                name: user.name,
+                role: user.role,
+                decision: 'Rejected',
+                reason: reason || '',
+                frontendUrl: process.env.FRONTEND_URL || 'https://bizflow-erp-1.onrender.com',
+                appName: process.env.APP_NAME || 'Bizflow',
+                supportEmail: process.env.SUPPORT_EMAIL || process.env.SENDER_EMAIL,
+                logoUrl: process.env.APP_LOGO_URL,
+            });
+            await transporter.sendMail({
+                from: process.env.SENDER_EMAIL,
+                to: user.email,
+                subject,
+                html,
+                text,
+            });
+        } catch (emailErr) {
+            console.error('Failed to send rejection email:', emailErr?.message || emailErr);
         }
 
         return res.json({ success: true, message: 'User rejected' });
@@ -198,13 +251,23 @@ export const registerUser = async (req, res) => {
         }
 
         // Send email (optional): tailor content based on approval
+        const { subject, html, text } = buildRegistrationEmail({
+            name,
+            role,
+            approvalStatus,
+            approvalRequiredRole,
+            frontendUrl: process.env.FRONTEND_URL || 'https://bizflow-erp-1.onrender.com',
+            appName: process.env.APP_NAME || 'Bizflow',
+            supportEmail: process.env.SUPPORT_EMAIL || process.env.SENDER_EMAIL,
+            logoUrl: process.env.APP_LOGO_URL,
+        });
+
         const mailOptions = {
-            from : process.env.SENDER_EMAIL,
-            to : email,
-            subject : "Welcome to Bizflow",
-            text : approvalStatus === 'Pending'
-                ? `Hello ${name}, your ${role} account request has been received and is pending ${approvalRequiredRole} approval.`
-                : `Hello ${name}, welcome to Bizflow. Your ${role} account has been created successfully.`
+            from: process.env.SENDER_EMAIL,
+            to: email,
+            subject,
+            html,
+            text,
         };
 
         try {
@@ -331,14 +394,23 @@ export const sendVerifyOtp = async (req, res) => {
 
         await user.save();
 
-        const mailOption = {
+        const { subject, html, text } = buildOTPEmail({
+            name: user.name || 'there',
+            purpose: 'Account Verification',
+            otp,
+            expiresInText: '24 hours',
+            frontendUrl: process.env.FRONTEND_URL || 'https://bizflow-erp-1.onrender.com',
+            appName: process.env.APP_NAME || 'Bizflow',
+            supportEmail: process.env.SUPPORT_EMAIL || process.env.SENDER_EMAIL,
+            logoUrl: process.env.APP_LOGO_URL,
+        });
+        await transporter.sendMail({
             from: process.env.SENDER_EMAIL,
             to: user.email,
-            subject: "Account Verification OTP",
-            text: `Your OTP is ${otp}. Verify your account by entering this OTP on the verification page. This OTP will expire in 24 hours.`
-        };
-
-        await transporter.sendMail(mailOption);
+            subject,
+            html,
+            text,
+        });
 
         return res.json({ success: true, message: "Verification OTP sent to email" });
 
@@ -417,14 +489,23 @@ export const sendPasswrodResetOtp = async (req,res)=>{
 
         await user.save();
 
-        const mailOption = {
+        const { subject, html, text } = buildOTPEmail({
+            name: user.name || 'there',
+            purpose: 'Password Reset',
+            otp,
+            expiresInText: '15 minutes',
+            frontendUrl: process.env.FRONTEND_URL || 'https://bizflow-erp-1.onrender.com',
+            appName: process.env.APP_NAME || 'Bizflow',
+            supportEmail: process.env.SUPPORT_EMAIL || process.env.SENDER_EMAIL,
+            logoUrl: process.env.APP_LOGO_URL,
+        });
+        await transporter.sendMail({
             from: process.env.SENDER_EMAIL,
             to: user.email,
-            subject: "Password Reset OTP",
-            text: `Your OTP is ${otp}. This OTP is used for Password resetting`
-        };
-
-        await transporter.sendMail(mailOption);
+            subject,
+            html,
+            text,
+        });
         return res.json({success : true, message :"OTP sent successfully for reset password"})
 
     } catch (error) {
@@ -458,22 +539,24 @@ export const forgotPassword = async (req, res) => {
         await user.save();
 
         // Send email with reset link
-        const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+        const resetUrl = `${(process.env.FRONTEND_URL || 'https://bizflow-erp-1.onrender.com')}/reset-password?token=${resetToken}`;
         
-        const mailOptions = {
+        const { subject, html, text } = buildPasswordResetLinkEmail({
+            name: user.name || 'there',
+            resetUrl,
+            frontendUrl: process.env.FRONTEND_URL || 'https://bizflow-erp-1.onrender.com',
+            appName: process.env.APP_NAME || 'Bizflow',
+            supportEmail: process.env.SUPPORT_EMAIL || process.env.SENDER_EMAIL,
+            logoUrl: process.env.APP_LOGO_URL,
+        });
+
+        await transporter.sendMail({
             from: process.env.SENDER_EMAIL,
             to: user.email,
-            subject: 'Password Reset Request',
-            html: `
-                <h2>Password Reset Request</h2>
-                <p>You requested a password reset. Click the link below to set a new password:</p>
-                <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a>
-                <p>This link will expire in 1 hour.</p>
-                <p>If you didn't request this, please ignore this email.</p>
-            `
-        };
-
-        await transporter.sendMail(mailOptions);
+            subject,
+            html,
+            text,
+        });
         
         res.status(200).json({ 
             success: true, 
@@ -521,18 +604,21 @@ export const resetPassword = async (req, res) => {
         await user.save();
 
         // Send confirmation email
-        const mailOptions = {
+        const { subject, html, text } = buildPasswordChangedEmail({
+            name: user.name || 'there',
+            frontendUrl: process.env.FRONTEND_URL || 'https://bizflow-erp-1.onrender.com',
+            appName: process.env.APP_NAME || 'Bizflow',
+            supportEmail: process.env.SUPPORT_EMAIL || process.env.SENDER_EMAIL,
+            logoUrl: process.env.APP_LOGO_URL,
+        });
+
+        await transporter.sendMail({
             from: process.env.SENDER_EMAIL,
             to: user.email,
-            subject: 'Password Changed Successfully',
-            html: `
-                <h2>Password Updated</h2>
-                <p>Your password has been successfully updated.</p>
-                <p>If you didn't make this change, please contact us immediately.</p>
-            `
-        };
-
-        await transporter.sendMail(mailOptions);
+            subject,
+            html,
+            text,
+        });
 
         res.status(200).json({ 
             success: true, 
@@ -574,20 +660,25 @@ export const sendResetOTP = async (req, res) => {
         user.resetOtpExpireAt = otpExpiry;
         await user.save();
 
-        // Send OTP via email
-        const mailOptions = {
+        // Send OTP via email (HTML template)
+        const { subject, html, text } = buildOTPEmail({
+            name: user.name || 'there',
+            purpose: 'Password Reset',
+            otp,
+            expiresInText: '15 minutes',
+            frontendUrl: process.env.FRONTEND_URL || 'https://bizflow-erp-1.onrender.com',
+            appName: process.env.APP_NAME || 'Bizflow',
+            supportEmail: process.env.SUPPORT_EMAIL || process.env.SENDER_EMAIL,
+            logoUrl: process.env.APP_LOGO_URL,
+        });
+
+        await transporter.sendMail({
             from: process.env.SENDER_EMAIL,
             to: user.email,
-            subject: 'Password Reset OTP',
-            html: `
-                <h2>Password Reset OTP</h2>
-                <p>Your OTP for password reset is: <strong>${otp}</strong></p>
-                <p>This OTP is valid for 15 minutes.</p>
-                <p>If you didn't request this, please ignore this email.</p>
-            `
-        };
-
-        await transporter.sendMail(mailOptions);
+            subject,
+            html,
+            text,
+        });
 
         res.json({ 
             success: true, 
@@ -684,18 +775,21 @@ export const resetUserPassword = async (req, res) => {
         await user.save();
 
         // Send confirmation email
-        const mailOptions = {
+        const { subject, html, text } = buildPasswordChangedEmail({
+            name: user.name || 'there',
+            frontendUrl: process.env.FRONTEND_URL || 'https://bizflow-erp-1.onrender.com',
+            appName: process.env.APP_NAME || 'Bizflow',
+            supportEmail: process.env.SUPPORT_EMAIL || process.env.SENDER_EMAIL,
+            logoUrl: process.env.APP_LOGO_URL,
+        });
+
+        await transporter.sendMail({
             from: process.env.SENDER_EMAIL,
             to: user.email,
-            subject: 'Password Changed Successfully',
-            html: `
-                <h2>Password Updated</h2>
-                <p>Your password has been successfully updated.</p>
-                <p>If you didn't make this change, please contact us immediately.</p>
-            `
-        };
-
-        await transporter.sendMail(mailOptions);
+            subject,
+            html,
+            text,
+        });
 
         res.json({ 
             success: true, 

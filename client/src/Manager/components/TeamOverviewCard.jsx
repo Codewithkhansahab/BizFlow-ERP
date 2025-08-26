@@ -55,24 +55,7 @@ const TeamOverviewCard = ({
                       </td>
                       <td>{emp.department || '—'}</td>
                       <td>{emp.designation || '—'}</td>
-                      <td>
-                        <div className="d-flex align-items-center gap-2">
-                          <Badge bg={(emp.status === 'Active' || !emp.status) ? 'success' : 'secondary'}>
-                            {emp.status || 'Active'}
-                          </Badge>
-                          {typeof updateEmployeeStatus === 'function' && (
-                            <Form.Select
-                              size="sm"
-                              style={{ width: 110 }}
-                              value={emp.status || 'Active'}
-                              onChange={(e) => updateEmployeeStatus(emp._id, e.target.value)}
-                            >
-                              <option value="Active">Active</option>
-                              <option value="Inactive">Inactive</option>
-                            </Form.Select>
-                          )}
-                        </div>
-                      </td>
+                     
                       <td>
                         <Button 
                           size="sm" 

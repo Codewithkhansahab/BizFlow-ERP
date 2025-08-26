@@ -111,7 +111,7 @@ export default function MySalaries(){
             </Table>
           )}
         </Card.Body>
-        <div className="d-flex align-items-center mb-3 mr-3">
+        <div className="d-flex align-items-center mb-3">
               <Button variant="outline-secondary" size="sm" onClick={() => navigate(-1)}>
                 ← Back
               </Button>

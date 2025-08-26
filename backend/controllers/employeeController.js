@@ -48,9 +48,15 @@ export const getAllEmployees = async (req,res)=>{
       }
     }
     
-    // Admin and HR can see all employees
-    const employees = await Employee.find(query).populate('user',"name email role profileImage isAccountVerified");
-    res.status(200).json(employees);
+    // Admin and HR can see all employees, but only of role 'Employee'
+    // Use populate match to exclude Admin/other roles. Unmatched populates set user=null; filter them out.
+    const employees = await Employee.find(query).populate({
+      path: 'user',
+      select: 'name email role profileImage isAccountVerified',
+      match: { role: 'Employee' }
+    });
+    const onlyEmployees = employees.filter(e => e.user); // remove entries where populate did not match
+    res.status(200).json(onlyEmployees);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
@@ -160,12 +166,27 @@ export const getDashboardData = async (req, res) => {
 
 export const completeProfile = async (req, res) => {
   try {
-    const { userId, department, position, joiningDate, phone, address, profileImage } = req.body;
+    const { userId, department, position, designation, joiningDate, phone, address, profileImage } = req.body || {};
     const resolvedUserId = userId || req.user?._id; // prefer authenticated user
 
-    // 1. Basic validation
-    if (!resolvedUserId || !department || !position || !joiningDate || !phone || !address) {
-      return res.status(400).json({ message: "All fields are required" });
+    // Normalize/trim inputs
+    const dept = typeof department === 'string' ? department.trim() : department;
+    const rolePosition = (typeof position === 'string' ? position.trim() : position) 
+      || (typeof designation === 'string' ? designation.trim() : designation);
+    const joinDate = joiningDate; // allow as-is; mongoose will cast
+    const phoneVal = typeof phone === 'string' ? phone.trim() : phone;
+    const addressVal = typeof address === 'string' ? address.trim() : address;
+
+    // 1. Basic validation with explicit missing fields
+    const missing = [];
+    if (!resolvedUserId) missing.push('user');
+    if (!dept) missing.push('department');
+    if (!rolePosition) missing.push('designation');
+    if (!joinDate) missing.push('joiningDate');
+    if (!phoneVal) missing.push('phone');
+    if (!addressVal) missing.push('address');
+    if (missing.length) {
+      return res.status(400).json({ message: 'All fields are required', missing });
     }
 
     // 2. Check if the user exists
@@ -183,11 +204,11 @@ export const completeProfile = async (req, res) => {
     // 4. Create new employee profile
     employee = new Employee({
       user: resolvedUserId, // references the User model
-      department,
-      designation: position, // mapping 'position' from request to schema's 'designation'
-      joiningDate,
-      phone,
-      address,
+      department: dept,
+      designation: rolePosition, // accept either 'position' or 'designation' from request
+      joiningDate: joinDate,
+      phone: phoneVal,
+      address: addressVal,
       status: 'Active',
     });
 
