@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Row, Col, Modal, Table, Badge, Button } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Badge, Form, Table, Spinner, Alert, Modal } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import DashboardLayout from '../Dashboard/DashboardLayout';
 import { AppContent } from '../context/AppContext';
@@ -26,6 +26,9 @@ const HRDashboard = () => {
   // Approvals state
   const [approvals, setApprovals] = useState([]);
   const [approvalsLoading, setApprovalsLoading] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
   const [allAttendanceData, setAllAttendanceData] = useState([]);
   
   // Form states
@@ -308,11 +311,24 @@ const HRDashboard = () => {
     }
   };
 
-  const rejectRegistration = async (userId) => {
+  const handleRejectClick = (userId) => {
+    setSelectedUserId(userId);
+    setRejectionReason('');
+    setShowRejectModal(true);
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!selectedUserId) return;
+    
     try {
-      const reason = window.prompt('Enter rejection reason (optional):') || '';
-      await axios.put(`${backendUrl}/api/users/approvals/${userId}/reject`, { reason }, { withCredentials: true });
+      await axios.put(
+        `${backendUrl}/api/users/approvals/${selectedUserId}/reject`, 
+        { reason: rejectionReason }, 
+        { withCredentials: true }
+      );
+      
       toast.info('User rejected');
+      setShowRejectModal(false);
       await fetchApprovals();
     } catch (err) {
       console.error(err);
@@ -507,7 +523,7 @@ const HRDashboard = () => {
                           <td>{u.createdAt ? new Date(u.createdAt).toLocaleString() : '-'}</td>
                           <td>
                             <Button size="sm" variant="success" className="me-2" onClick={() => approveRegistration(u._id)}>Approve</Button>
-                            <Button size="sm" variant="outline-danger" onClick={() => rejectRegistration(u._id)}>Reject</Button>
+                            <Button size="sm" variant="outline-danger" onClick={() => handleRejectClick(u._id)}>Reject</Button>
                           </td>
                         </tr>
                       ))}
@@ -688,6 +704,33 @@ const HRDashboard = () => {
           </Modal.Footer>
         </Modal>
       )}
+
+      {/* Rejection Reason Modal */}
+      <Modal show={showRejectModal} onHide={() => setShowRejectModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Reject User Registration</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group>
+            <Form.Label>Reason for Rejection (Optional)</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              placeholder="Please provide a reason for rejection (optional)"
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowRejectModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleRejectConfirm}>
+            Confirm Rejection
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </DashboardLayout>
   );
 };

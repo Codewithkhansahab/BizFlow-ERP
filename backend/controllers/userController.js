@@ -121,11 +121,11 @@ export const rejectUserRegistration = async (req, res) => {
             return res.status(400).json({ message: 'This request is not pending your approval' });
         }
 
-        user.approvalStatus = 'Rejected';
-        user.rejectionReason = reason || '';
-        user.approvedBy = approver._id; // tracks the reviewer
-        user.approvedAt = new Date();
-        await user.save();
+        // Delete the user and their associated data
+        await User.findByIdAndDelete(id);
+        
+        // Also delete any associated employee record if it exists
+        await Employee.findOneAndDelete({ user: id });
 
         // Notify registrant
         try {
@@ -183,10 +183,21 @@ export const registerUser = async (req, res) => {
     const { name, email, password, role } = req.body;
 
     try {
+        // Check if user already exists
         const userExist = await User.findOne({ email });
-        console.log(userExist)
         if (userExist) {
             return res.status(400).json({ message: "User already exists" });
+        }
+
+        // Check if trying to register as admin and admin already exists
+        if (role === 'Admin') {
+            const adminExists = await User.findOne({ role: 'Admin' });
+            if (adminExists) {
+                return res.status(400).json({ 
+                    message: "An admin already exists in the system. Please contact the system administrator.",
+                    errorType: 'ADMIN_EXISTS'
+                });
+            }
         }
 
         // Enforce strong password policy on registration

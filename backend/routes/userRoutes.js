@@ -1,4 +1,5 @@
 import express from 'express';
+import User from '../models/User.js';
 import { 
     registerUser, 
     loginUser, 
@@ -28,6 +29,25 @@ const userRouter = express.Router();
 userRouter.post("/register", registerUser);
 userRouter.post("/login", loginUser);
 userRouter.post("/logout", logout);
+
+// Check if admin exists
+userRouter.get("/check-admin", async (req, res) => {
+    try {
+        const admin = await User.findOne({ role: 'Admin', isActive: true });
+        res.json({ 
+            success: true, 
+            adminExists: !!admin,
+            message: admin ? 'Admin user exists' : 'No admin user found'
+        });
+    } catch (error) {
+        console.error('Error checking admin status:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Error checking admin status',
+            error: error.message 
+        });
+    }
+});
 
 // Email verification routes
 userRouter.post("/send-verify-otp", protect, sendVerifyOtp);

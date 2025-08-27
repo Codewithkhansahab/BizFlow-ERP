@@ -49,25 +49,45 @@ const Login = () => {
                     // Suppress error message on screen; rely on checklist + disabled button
                     return;
                 }
-                const { data } = await axios.post(`${backendUrl}/api/users/register`, {
-                    name, email, password, role
-                });
 
-                if (data._id) { // Sign Up successful
-                    if (data.approvalStatus === 'Pending') {
-                        const approver = data.approvalRequiredRole || 'an approver';
-                        toast.info(`Account request submitted. Pending ${approver} approval.`);
+                // Check if trying to register as admin when one exists
+                if (role === 'Admin') {
+                    try {
+                        const response = await axios.get(`${backendUrl}/api/users/check-admin`);
+                        if (response.data?.success && response.data.adminExists) {
+                            toast.warning('An admin already exists in the system. Please contact the system administrator.');
+                            return false; // Prevent form submission
+                        }
+                    } catch (error) {
+                        console.error('Error checking admin status:', error);
+                        // If there's an error, show a warning but still allow the registration to proceed
+                        // The backend will perform the final check during registration
+                        toast.warning('Unable to verify admin status. Proceeding with registration...');
+                    }
+                }
+
+                try {
+                    const { data } = await axios.post(`${backendUrl}/api/users/register`, {
+                        name, email, password, role
+                    });
+                    
+                    if (data.requiresApproval) {
+                        toast.info(`Account request submitted. Pending ${data.approverRole} approval.`);
                     } else {
                         toast.success("Account created successfully! Please login.");
                     }
+                    
                     // Clear fields and switch to login
                     setName('');
                     setEmail('');
                     setPassword('');
-                    setRole('Employee');
                     setState('Login');
-                } else {
-                    toast.error(data.message || "Registration failed");
+                } catch (error) {
+                    if (error.response?.data?.errorType === 'ADMIN_EXISTS') {
+                        toast.warning('An admin already exists in the system. Please contact the system administrator.');
+                    } else {
+                        toast.error(error.response?.data?.message || "Registration failed");
+                    }
                 }
             } else { // Login
                 const { data } = await axios.post(`${backendUrl}/api/users/login`, {
@@ -228,7 +248,7 @@ const Login = () => {
                                         <option value="HR">HR</option>
                                         <option value="Employee">Employee</option>
                                         <option value="Manager">Manager</option>
-                                        <option value="CEO">CEO</option>
+                                        {/* <option value="CEO">CEO</option> */}
                                     </Form.Select>
                                 </InputGroup>
                             </Form.Group>
