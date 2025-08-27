@@ -9,7 +9,7 @@ import DashboardStats from './components/DashboardStats';
 import TaskManagementCard from './components/TaskManagementCard';
 import TeamOverviewCard from './components/TeamOverviewCard';
 import TaskCreationModal from './components/TaskCreationModal';
-import ProfileUpdateRequestsCard from './components/ProfileUpdateRequestsCard';
+import ManagerAttendanceCard from './components/ManagerAttendanceCard';
 import QuickAnnouncementCard from './components/QuickAnnouncementCard';
 import UniversalCompleteProfile from '../Dashboard/components/UniversalCompleteProfile';
 
@@ -351,24 +351,12 @@ const ManagerDashboard = () => {
       <Row className="g-4 mt-1">
         <Col md={8}>
           <TeamOverviewCard 
-            employees={employees}
-            empLoading={empLoading}
-            showAllEmployees={showAllEmployees}
-            setShowAllEmployees={setShowAllEmployees}
-            fetchEmployees={fetchEmployees}
             viewEmployeeProfile={viewEmployeeProfile}
             updateEmployeeStatus={updateEmployeeStatus}
           />
         </Col>
         <Col md={4}>
-          <ProfileUpdateRequestsCard 
-            requests={requests}
-            reqLoading={reqLoading}
-            showAllRequests={showAllRequests}
-            setShowAllRequests={setShowAllRequests}
-            fetchProfileRequests={fetchProfileRequests}
-            reviewRequest={reviewRequest}
-          />
+          <ManagerAttendanceCard />
         </Col>
       </Row>
 

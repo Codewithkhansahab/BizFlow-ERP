@@ -67,7 +67,7 @@ const Login = () => {
                     setRole('Employee');
                     setState('Login');
                 } else {
-                    // Suppress error message on screen for Sign Up failures
+                    toast.error(data.message || "Registration failed");
                 }
             } else { // Login
                 const { data } = await axios.post(`${backendUrl}/api/users/login`, {
@@ -84,9 +84,12 @@ const Login = () => {
                 }
             }
         } catch (error) {
-            // Only show errors for Login; suppress for Sign Up
-            if (state === 'Login') {
-                toast.error(error.response?.data?.message || error.message);
+            // Show errors for both Login and Sign Up
+            const errorMessage = error.response?.data?.message || error.message;
+            if (state === 'Sign Up' && errorMessage.includes('already exists')) {
+                toast.warning('This email is already registered. Please use a different email or login.');
+            } else if (state === 'Login') {
+                toast.error(errorMessage);
             }
         }
     };

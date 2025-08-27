@@ -2,17 +2,31 @@ import Attendance from "../models/Attendace.js";
 import User from "../models/User.js";
 import moment from "moment/moment.js";
 
-export const checkIn = async (req,res)=>{
-
-    try{
-
+export const checkIn = async (req, res) => {
+    try {
         const userId = req.user._id;
-        const today = new Date();
-        today.setHours(0,0,0,0)
-
-        const alreadyCheckedIn = await Attendance.findOne({user : userId, date: today});
-        if(alreadyCheckedIn){
-            return res.status(400).json({message : "Alredy checked in Today"})
+        const now = new Date();
+        
+        // Set time to start of day in local timezone
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        // Check for any attendance record for today
+        const existingAttendance = await Attendance.findOne({
+            user: userId,
+            date: { $gte: today, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) }
+        });
+        
+        if (existingAttendance) {
+            // If already checked in today but not checked out, don't allow another check-in
+            if (!existingAttendance.checkOut) {
+                return res.status(400).json({ 
+                    message: "You have already checked in today and haven't checked out yet." 
+                });
+            }
+            // If already checked out, don't allow another check-in on the same day
+            return res.status(400).json({ 
+                message: "You have already completed your attendance for today." 
+            });
         }
 
         const attendance = await Attendance.create({

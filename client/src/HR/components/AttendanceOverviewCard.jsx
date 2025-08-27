@@ -68,7 +68,8 @@ const AttendanceOverviewCard = ({
                 <tr>
                   <th>Employee</th>
                   <th>Department</th>
-                  <th>Today's Status</th>
+                  <th>Date</th>
+                  <th>Status</th>
                   <th>Check In</th>
                   <th>Check Out</th>
                   <th>Hours Worked</th>
@@ -90,6 +91,14 @@ const AttendanceOverviewCard = ({
                       </div>
                     </td>
                     <td>{attendance.employee?.department || '—'}</td>
+                    <td>
+                      {attendance.date ? new Date(attendance.date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        weekday: 'short'
+                      }) : '—'}
+                    </td>
                     <td>
                       <Badge bg={
                         attendance.status === 'Present' ? 'success' : 

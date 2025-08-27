@@ -35,28 +35,37 @@ export const addEmployee = async (req, res) => {
   }
 };
 
-export const getAllEmployees = async (req,res)=>{
+export const getAllEmployees = async (req, res) => {
   try {
     let query = {};
     
-    // If manager, only show employees in their department or assigned projects
-    if (req.user.role === 'Manager') {
-      // For now, filter by department (can be enhanced with project-based filtering)
-      const managerEmployee = await Employee.findOne({ user: req.user._id });
-      if (managerEmployee && managerEmployee.department) {
-        query.department = managerEmployee.department;
-      }
+    // If user is not admin, HR, or manager, return unauthorized
+    if (req.user.role !== 'Admin' && req.user.role !== 'HR' && req.user.role !== 'Manager') {
+      return res.status(403).json({ message: 'Not authorized' });
     }
     
-    // Admin and HR can see all employees, but only of role 'Employee'
-    // Use populate match to exclude Admin/other roles. Unmatched populates set user=null; filter them out.
-    const employees = await Employee.find(query).populate({
-      path: 'user',
-      select: 'name email role profileImage isAccountVerified',
-      match: { role: 'Employee' }
-    });
-    const onlyEmployees = employees.filter(e => e.user); // remove entries where populate did not match
-    res.status(200).json(onlyEmployees);
+    // For managers, admins, and HR, show all employees (no additional filtering)
+    console.log(`User ${req.user._id} (${req.user.role}) is fetching all employees`);
+    
+    // Populate user data and filter out any null users
+    const employees = await Employee.find(query)
+      .populate({
+        path: 'user',
+        select: 'name email role profileImage isAccountVerified'
+      })
+      .populate({
+        path: 'manager',
+        select: 'name email',
+        populate: {
+          path: 'user',
+          select: 'name email'
+        }
+      });
+      
+    // Filter out any documents where user is null (due to populate match)
+    const validEmployees = employees.filter(emp => emp.user);
+    
+    res.status(200).json(validEmployees);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
