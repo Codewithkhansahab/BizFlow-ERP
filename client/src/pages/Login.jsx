@@ -110,9 +110,20 @@ const Login = () => {
 
             if (state === 'Sign Up' && errorMessage.includes('already exists')) {
                 toast.warning('This email is already registered. Please use a different email or login.');
-            } 
+            } else {
+                // Show specific error messages for different scenarios
+                if (errorMessage.includes('Access denied for role')) {
+                    toast.error(`Wrong role selected. ${errorMessage}`);
+                } else if (errorMessage.includes('pending') && errorMessage.includes('approval')) {
+                    toast.warning(errorMessage);
+                } else if (errorMessage.includes('rejected')) {
+                    toast.error(errorMessage);
+                } else {
+                    toast.error(errorMessage || `${state} failed`);
+                }
             }
         }
+    };
 
     return (
         <Container

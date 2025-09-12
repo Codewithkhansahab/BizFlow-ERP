@@ -50,9 +50,14 @@ const DashboardLayout = ({ children, roleTitle }) => {
             await axios.post(`${backendUrl}/api/users/logout`, {}, { withCredentials: true });
             setIsLoggedIn(false);
             setUserData(null);
+            toast.success('Logged out successfully');
             navigate('/login');
         } catch (error) {
             toast.error(error.response?.data?.message || error.message);
+            // Even if logout API fails, clear local state
+            setIsLoggedIn(false);
+            setUserData(null);
+            navigate('/login');
         }
     };
 
