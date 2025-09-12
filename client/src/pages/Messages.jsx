@@ -3,7 +3,7 @@ import { Container, Card, ListGroup, Form, Button, Badge } from 'react-bootstrap
 import { AppContent } from '../context/AppContext';
 import { FiSend, FiUser, FiClock } from 'react-icons/fi';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/sweetAlert';
 
 const Messages = () => {
     const { backendUrl } = useContext(AppContent);

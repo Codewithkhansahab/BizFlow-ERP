@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Modal, Form, Button, Image, Row, Col } from 'react-bootstrap';
 import { AppContent } from '../../context/AppContext';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast } from '../../utils/sweetAlert';
 import { FiUpload } from 'react-icons/fi';
 
 const AdminProfileUpdateModal = ({ show, onHide, onUpdateSuccess, userData: initialUserData }) => {

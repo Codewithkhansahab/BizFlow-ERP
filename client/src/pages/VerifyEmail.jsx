@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Container, Row, Col, Card, Form, Button, InputGroup } from 'react-bootstrap';
 import { FaEnvelope } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/sweetAlert';
 import axios from 'axios';
 import { AppContent } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';

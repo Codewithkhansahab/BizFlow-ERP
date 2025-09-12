@@ -3,7 +3,7 @@ import { Navbar, Nav, Container, Dropdown, Button, Image } from 'react-bootstrap
 import { AppContent } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/sweetAlert';
 import AdminProfileUpdateModal from '../Admin/components/ProfileUpdateModal';
 // AnnouncementPanel removed as part of rollback
 
@@ -128,9 +128,12 @@ const DashboardLayout = ({ children, roleTitle }) => {
                                                 ? (user.profileImage.startsWith('http')
                                                     ? user.profileImage
                                                     : `${(backendUrl || '').replace(/\/$/, '')}/${(user.profileImage || '').replace(/^\/+/, '')}`)
-                                                : 'https://via.placeholder.com/40'
+                                                : '/generated-image (3).png'
                                         }
-                                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = 'https://via.placeholder.com/40'; }}
+                                        onError={(e) => { 
+                                            e.currentTarget.onerror = null; 
+                                            e.currentTarget.src = '/generated-image (3).png'; 
+                                        }}
                                         roundedCircle
                                         width={40}
                                         height={40}

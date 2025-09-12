@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { Container, Card, Form, Button, Tabs, Tab, Alert } from 'react-bootstrap';
 import { AppContent } from '../context/AppContext';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/sweetAlert';
 
 const Settings = () => {
     const { backendUrl } = useContext(AppContent);

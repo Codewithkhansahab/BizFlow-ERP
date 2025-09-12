@@ -4,6 +4,7 @@ import Notification from "../models/Notification.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import transporter from "../config/nodeMailer.js";
 
 import { 
     buildRegistrationEmail,
@@ -19,6 +20,7 @@ const isStrongPassword = (password) => {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
     return regex.test(password);
 };
+
 
 // ===================== APPROVAL WORKFLOW =====================
 // List users pending approval for the current approver's role
@@ -176,7 +178,7 @@ const generateToken = (id) => {
         expiresIn: '30d', // Token expires in 30 days
     });
 };
-import transporter from "../config/nodeMailer.js";
+
 
 // ===================== REGISTER =====================
 export const registerUser = async (req, res) => {
@@ -337,6 +339,7 @@ export const loginUser = async (req, res) => {
         if (user.approvalStatus === 'Rejected') {
             return res.status(403).json({ message: 'Your registration was rejected. Please contact support/HR.' });
         }
+
 
         const token = generateToken(user._id);
 

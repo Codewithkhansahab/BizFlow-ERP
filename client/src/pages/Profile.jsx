@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Container, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { AppContent } from '../context/AppContext';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/sweetAlert';
 
 const Profile = () => {
     const { backendUrl, userData } = useContext(AppContent);

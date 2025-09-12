@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast } from '../../utils/sweetAlert';
 import { useContext } from 'react';
 import { AppContent } from '../../context/AppContext';
 

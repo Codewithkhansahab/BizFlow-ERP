@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/sweetAlert';
 import { Container, Card, Form, Button, Spinner, Alert } from 'react-bootstrap';
 import axios from 'axios';
 import { useApp } from '../context/AppContext';

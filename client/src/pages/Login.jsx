@@ -4,7 +4,7 @@ import { FaUser, FaEnvelope, FaLock } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppContent } from '../context/AppContext';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/sweetAlert';
 
 const Login = () => {
     const { backendUrl, setIsLoggedIn, setUserData } = useContext(AppContent);
@@ -106,13 +106,13 @@ const Login = () => {
         } catch (error) {
             // Show errors for both Login and Sign Up
             const errorMessage = error.response?.data?.message || error.message;
+            const errorType = error.response?.data?.errorType;
+
             if (state === 'Sign Up' && errorMessage.includes('already exists')) {
                 toast.warning('This email is already registered. Please use a different email or login.');
-            } else if (state === 'Login') {
-                toast.error(errorMessage);
+            } 
             }
         }
-    };
 
     return (
         <Container
@@ -162,7 +162,7 @@ const Login = () => {
                                         </InputGroup>
                                     </Form.Group>
 
-                                    {/* <Form.Group className="mb-3">
+                                    {/* <Form.Group className="mb-2">
                                         <InputGroup>
                                             <InputGroup.Text>Role</InputGroup.Text>
                                             <Form.Select value={role} onChange={(e) => setRole(e.target.value)}>
@@ -189,10 +189,6 @@ const Login = () => {
                                     />
                                 </InputGroup>
                             </Form.Group>
-
-                            {state === 'Sign Up' && (
-                                <></>
-                            )}
 
                             <Form.Group className="mb-2">
                                 <InputGroup>
@@ -296,6 +292,6 @@ const Login = () => {
             </Row>
         </Container>
     );
+    
 };
-
 export default Login;

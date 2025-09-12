@@ -116,11 +116,33 @@ export const getAllAttendance = async (req,res)=>{
         const attendanceRecords = await Attendance.find()
             .populate("user","name email role")
             .sort({date : -1})
+        
+        // Get all user IDs to fetch employee data
+        const userIds = attendanceRecords.map(rec => rec.user?._id).filter(Boolean);
+        
+        // Import Employee model
+        const Employee = (await import("../models/Employee.js")).default;
+        
+        // Fetch employee data for all users
+        const employees = await Employee.find({ user: { $in: userIds } })
+            .populate("user", "name email role");
+        
+        // Create a map for quick lookup
+        const employeeMap = new Map();
+        employees.forEach(emp => {
+            if (emp.user?._id) {
+                employeeMap.set(emp.user._id.toString(), emp);
+            }
+        });
+        
         const formatted = attendanceRecords.map((rec)=>{
+            const employee = employeeMap.get(rec.user?._id?.toString());
             return{
             user : rec.user?.name ?? "Unknown",
             email: rec.user?.email ?? "N/A",
             role : rec.user?.role ?? "N/A",
+            department: employee?.department ?? "N/A",
+            designation: employee?.designation ?? rec.user?.role ?? "N/A",
             date : moment(rec.date).format("YYYY-MMMM-DD"),
             checkIn : rec.checkIn ? moment(rec.checkIn).format("hh:mm A") :"N/A",
             checkOut : rec.checkOut ? moment(rec.checkOut).format("hh:mm A"):"N/A",

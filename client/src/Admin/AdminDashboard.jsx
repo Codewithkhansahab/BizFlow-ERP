@@ -10,7 +10,8 @@ import RecentTasksCard from './components/RecentTasksCard';
 import ProfileRequestsManagementCard from './components/ProfileRequestsManagementCard';
 import AdminAnnouncementCard from './components/AdminAnnouncementCard';
 import AttendanceOverviewCard from '../HR/components/AttendanceOverviewCard';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/sweetAlert';
+import Swal from 'sweetalert2';
 import UniversalCompleteProfile from '../Dashboard/components/UniversalCompleteProfile';
 
 const AdminDashboard = () => {
@@ -112,10 +113,26 @@ const AdminDashboard = () => {
 
   const rejectRegistration = async (userId) => {
     try {
-      const reason = window.prompt('Enter rejection reason (optional):') || '';
-      await axios.put(`${backendUrl}/api/users/approvals/${userId}/reject`, { reason }, { withCredentials: true });
-      toast.info('User rejected');
-      await fetchApprovals();
+      const { value: reason } = await Swal.fire({
+        title: 'Reject User Registration',
+        input: 'textarea',
+        inputLabel: 'Rejection Reason (Optional)',
+        inputPlaceholder: 'Enter reason for rejection...',
+        showCancelButton: true,
+        confirmButtonText: 'Reject User',
+        confirmButtonColor: '#dc3545',
+        cancelButtonText: 'Cancel',
+        inputValidator: () => {
+          // No validation needed since reason is optional
+          return null;
+        }
+      });
+      
+      if (reason !== undefined) { // User clicked confirm (even with empty reason)
+        await axios.put(`${backendUrl}/api/users/approvals/${userId}/reject`, { reason: reason || '' }, { withCredentials: true });
+        toast.info('User rejected');
+        await fetchApprovals();
+      }
     } catch (err) {
       console.error(err);
       const msg = err?.response?.data?.message || 'Failed to reject user';
@@ -209,8 +226,8 @@ const AdminDashboard = () => {
         name: record.user || 'Unknown User',
         email: record.email || 'N/A'
       },
-      department: 'N/A',
-      designation: record.role || 'N/A'
+      department: record.department || 'N/A',
+      designation: record.designation || record.role || 'N/A'
     },
     status: record.status || 'Unknown',
     date: record.date,

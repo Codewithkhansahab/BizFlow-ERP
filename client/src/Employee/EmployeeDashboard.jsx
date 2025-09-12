@@ -400,7 +400,7 @@ const EmployeeDashboard = () => {
                   <div className="fw-semibold">Salaries & Payslips</div>
                   <div className="text-muted">View your monthly salary details and payment status.</div>
                 </div>
-                <Button as={Link} to="/employee/salaries" variant="primary">View</Button>
+                <Button as={Link} to="/my-salaries" variant="primary">View</Button>
               </Card.Body>
             </Card>
           </Col>

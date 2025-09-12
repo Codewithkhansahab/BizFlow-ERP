@@ -1,13 +1,15 @@
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+
+// Pages
 import Home from './pages/Home';
 import Login from './pages/Login';
 import VerifyEmail from './pages/VerifyEmail';
 import ResetPassword from './pages/ResetPassword';
 import ForgotPassword from './auth/ForgotPassword';
 import ResetPasswordWithOTP from './auth/ResetPasswordWithOTP';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+
+// Dashboard Components
 import AdminDashboard from './Admin/AdminDashboard';
 import HRDashboard from './HR/HRDashboard';
 import EmployeeDashboard from './Employee/EmployeeDashboard';
@@ -16,13 +18,14 @@ import CEODashboard from './CEO/CEODashboard';
 import CompleteProfile from './Employee/CompleteProfile';
 import SalaryManagement from './HR/SalaryManagement';
 import MySalaries from './Employee/MySalaries';
+
+// Components
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleRoute from './components/RoleRoute';
 
 const App = () => {
   return (
     <AuthProvider>
-      <ToastContainer position="top-center"/>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -49,34 +52,10 @@ const App = () => {
           }
         />
         <Route
-          path="/hr/salaries"
-          element={
-            <RoleRoute roles={["HR"]}>
-              <SalaryManagement />
-            </RoleRoute>
-          }
-        />
-        <Route
           path="/employee"
           element={
             <RoleRoute roles={["Employee"]}>
               <EmployeeDashboard />
-            </RoleRoute>
-          }
-        />
-        <Route
-          path="/employee/salaries"
-          element={
-            <RoleRoute roles={["Employee"]}>
-              <MySalaries />
-            </RoleRoute>
-          }
-        />
-        <Route
-          path="/ceo"
-          element={
-            <RoleRoute roles={["CEO"]}>
-              <CEODashboard />
             </RoleRoute>
           }
         />
@@ -89,6 +68,14 @@ const App = () => {
           }
         />
         <Route
+          path="/ceo"
+          element={
+            <RoleRoute roles={["CEO"]}>
+              <CEODashboard />
+            </RoleRoute>
+          }
+        />
+        <Route
           path="/complete-profile"
           element={
             <ProtectedRoute>
@@ -96,16 +83,25 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        
-        {/* Common Dashboard Routes */}
-        {/* <Route path="/profile" element={<Profile />} />
-        <Route path="/messages" element={<Messages />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/settings/:tab" element={<Settings />} /> */}
+        <Route
+          path="/salaries"
+          element={
+            <ProtectedRoute>
+              <SalaryManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-salaries"
+          element={
+            <ProtectedRoute>
+              <MySalaries />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </AuthProvider>
-  )
-}
+  );
+};
 
 export default App;
-

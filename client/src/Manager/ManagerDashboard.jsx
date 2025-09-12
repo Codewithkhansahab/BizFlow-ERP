@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { Row, Col, Modal, ProgressBar, Badge, Button, Table } from 'react-bootstrap';
 import DashboardLayout from '../Dashboard/DashboardLayout';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/sweetAlert';
 import { AppContent } from '../context/AppContext';
 import WelcomeHeader from '../Employee/components/WelcomeHeader';
 import DashboardStats from './components/DashboardStats';

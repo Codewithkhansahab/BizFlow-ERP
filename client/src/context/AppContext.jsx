@@ -4,101 +4,104 @@ import axios from "axios";
 export const AppContent = createContext();
 
 export const AppContextProvider = (props) => {
-    // Prefer .env value; else fall back to swapping Vite's 5173 with backend 5000 during local dev.
-    // Normalize to no trailing slash to avoid // in requests.
-    const computedFallback = (typeof window !== 'undefined' && window.location && window.location.origin)
-        ? window.location.origin.replace(/:5173$/, ':5000')
-        : '';
-    const backendUrl = (import.meta.env.VITE_BACKEND_URL || computedFallback || '').replace(/\/$/, '');
+  // Prefer .env value; else fall back to swapping Vite's 5173 with backend 5000 during local dev.
+  // Normalize to no trailing slash to avoid // in requests.
+  const computedFallback =
+    typeof window !== "undefined" && window.location && window.location.origin
+      ? window.location.origin.replace(/:5173$/, ":5000")
+      : "";
+  const backendUrl = (
+    import.meta.env.VITE_BACKEND_URL ||
+    computedFallback ||
+    ""
+  ).replace(/\/$/, "");
 
-    // Try to get login state from localStorage
-    const [isLoggedIn, setIsLoggedIn] = useState(() => {
-        const saved = localStorage.getItem("isLoggedIn");
-        return saved === "true" ? true : false;
-    });
+  // Try to get login state from localStorage
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    const saved = localStorage.getItem("isLoggedIn");
+    return saved === "true" ? true : false;
+  });
 
-    const [userData, setUserData] = useState(() => {
-        const saved = localStorage.getItem("userData");
-        return saved ? JSON.parse(saved) : null;
-    });
+  const [userData, setUserData] = useState(() => {
+    const saved = localStorage.getItem("userData");
+    return saved ? JSON.parse(saved) : null;
+  });
 
-    // Save to localStorage whenever state changes
-    useEffect(() => {
-        localStorage.setItem("isLoggedIn", isLoggedIn);
-        if(userData) {
-            localStorage.setItem("userData", JSON.stringify(userData));
+  // Save to localStorage whenever state changes
+  useEffect(() => {
+    localStorage.setItem("isLoggedIn", isLoggedIn);
+    if (userData) {
+      localStorage.setItem("userData", JSON.stringify(userData));
+    }
+  }, [isLoggedIn, userData]);
+
+  // Ensure axios sends cookies by default
+  useEffect(() => {
+    axios.defaults.withCredentials = true;
+  }, []);
+
+  // Validate session on app load to prevent stale localStorage auth
+  useEffect(() => {
+    const validateSession = async () => {
+      try {
+        if (!isLoggedIn) return;
+        await axios.post(`${backendUrl}/api/users/is-auth`);
+        // If OK, session is valid; do nothing
+      } catch (err) {
+        // If 401 or error, clear auth state and storage
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("userData");
+        setIsLoggedIn(false);
+        setUserData(null);
+        if (window.location.pathname !== "/login") {
+          window.location.replace("/login");
         }
-    }, [isLoggedIn, userData]);
-
-    // Ensure axios sends cookies by default
-    useEffect(() => {
-        axios.defaults.withCredentials = true;
-    }, []);
-
-    // Validate session on app load to prevent stale localStorage auth
-    useEffect(() => {
-        const validateSession = async () => {
-            try {
-                if (!isLoggedIn) return;
-                await axios.post(`${backendUrl}/api/users/is-auth`);
-                // If OK, session is valid; do nothing
-            } catch (err) {
-                // If 401 or error, clear auth state and storage
-                localStorage.removeItem("isLoggedIn");
-                localStorage.removeItem("userData");
-                setIsLoggedIn(false);
-                setUserData(null);
-                if (window.location.pathname !== "/login") {
-                    window.location.replace("/login");
-                }
-            }
-        };
-        validateSession();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    // Global 401 interceptor: redirect to login and clear state
-    useEffect(() => {
-        const interceptorId = axios.interceptors.response.use(
-            (response) => response,
-            (error) => {
-                if (error?.response?.status === 401) {
-                    localStorage.removeItem("isLoggedIn");
-                    localStorage.removeItem("userData");
-                    setIsLoggedIn(false);
-                    setUserData(null);
-                    if (window.location.pathname !== "/login") {
-                        window.location.replace("/login");
-                    }
-                }
-                return Promise.reject(error);
-            }
-        );
-
-        return () => axios.interceptors.response.eject(interceptorId);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    const value = {
-        backendUrl,
-        isLoggedIn,
-        setIsLoggedIn,
-        userData,
-        setUserData,
+      }
     };
+    validateSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    return (
-        <AppContent.Provider value={value}>
-            {props.children}
-        </AppContent.Provider>
+  // Global 401 interceptor: redirect to login and clear state
+  useEffect(() => {
+    const interceptorId = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error?.response?.status === 401) {
+          localStorage.removeItem("isLoggedIn");
+          localStorage.removeItem("userData");
+          setIsLoggedIn(false);
+          setUserData(null);
+          if (window.location.pathname !== "/login") {
+            window.location.replace("/login");
+          }
+        }
+        return Promise.reject(error);
+      }
     );
+
+    return () => axios.interceptors.response.eject(interceptorId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const value = {
+    backendUrl,
+    isLoggedIn,
+    setIsLoggedIn,
+    userData,
+    setUserData,
+  };
+
+  return (
+    <AppContent.Provider value={value}>{props.children}</AppContent.Provider>
+  );
 };
 
 // Custom hook to use the app context
 export const useApp = () => {
-    const context = useContext(AppContent);
-    if (context === undefined) {
-        throw new Error('useApp must be used within an AppContextProvider');
-    }
-    return context;
+  const context = useContext(AppContent);
+  if (context === undefined) {
+    throw new Error("useApp must be used within an AppContextProvider");
+  }
+  return context;
 };

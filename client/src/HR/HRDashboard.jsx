@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Form, Table, Spinner, Alert, Modal } from 'react-bootstrap';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/sweetAlert';
 import DashboardLayout from '../Dashboard/DashboardLayout';
 import { AppContent } from '../context/AppContext';
 import axios from 'axios';
@@ -130,8 +130,8 @@ const HRDashboard = () => {
         name: record.user || 'Unknown User',
         email: record.email || 'N/A'
       },
-      department: 'N/A',
-      designation: record.role || 'N/A'
+      department: record.department || 'N/A',
+      designation: record.designation || record.role || 'N/A'
     },
     status: record.status || 'Unknown',
     date: record.date,
@@ -485,7 +485,7 @@ const HRDashboard = () => {
       )}
       <Row className="mb-3">
         <Col>
-          <Button as={Link} to="/hr/salaries" variant="dark">Manage Salaries</Button>
+          <Button as={Link} to="/salaries" variant="dark">Manage Salaries</Button>
         </Col>
       </Row>
 

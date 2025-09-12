@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Badge, Spinner, Button } from 'react-bootstrap';
 import { FaClock, FaSignInAlt, FaSignOutAlt, FaSync } from 'react-icons/fa';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast } from '../../utils/sweetAlert';
 import { useAuth } from '../../context/AuthContext';
 
 const ManagerAttendanceCard = () => {

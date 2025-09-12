@@ -3,7 +3,7 @@ import { Table, Badge, Row, Col, Form, Spinner, Card,Button } from 'react-bootst
 import axios from 'axios';
 import DashboardLayout from '../Dashboard/DashboardLayout';
 import { AppContent } from '../context/AppContext';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/sweetAlert';
 import { useNavigate } from 'react-router-dom';
 
 const monthNames = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
